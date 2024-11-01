@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        #stockInput {
+            width: 300px;
+            padding: 10px;
+            margin: 20px auto;
+            display: block;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #analyzeButton {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            margin: 0 auto;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Stock Market Analyzer</h1>
+    <input type="text" id="stockInput" placeholder="Enter Company Name or Ticker (e.g., AAPL)">
+    <button id="analyzeButton">Analyze Stock</button>
+
+    <div id="result" class="fade-in"></div>
+
+    <script>
+        const apiKey = 'CKYM2YOCGD16BV5T'; // Your Alpha Vantage API key
+
+        document.getElementById('analyzeButton').addEventListener('click', function () {
+            const stockName = document.getElementById('stockInput').value.trim();
+            const resultDiv = document.getElementById('result');
+
+            if (!stockName) {
+                resultDiv.innerHTML = `<p>Please enter a stock ticker or company name.</p>`;
+                resultDiv.style.display = 'block';
+                return;
+            }
+
+            fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${stockName}&interval=5min&apikey=${apiKey}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data['Time Series (5min)']) {
+                        const latestTime = Object.keys(data['Time Series (5min)'])[0];
+                        const stockInfo = data['Time Series (5min)'][latestTime];
+
+                        resultDiv.innerHTML = `
+                            <h2>${stockName.toUpperCase()}</h2>
+                            <p><strong>Price:</strong> $${parseFloat(stockInfo['1. open']).toFixed(2)}</p>
+                            <p><strong>High:</strong> $${parseFloat(stockInfo['2. high']).toFixed(2)}</p>
+                            <p><strong>Low:</strong> $${parseFloat(stockInfo['3. low']).toFixed(2)}</p>
+                            <p><strong>Volume:</strong> ${stockInfo['5. volume']}</p>
+                        `;
+                        resultDiv.style.display = 'block';
+                    } else {
+                        resultDiv.innerHTML = `<p>Stock not found. Please try another ticker.</p>`;
+                        resultDiv.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    resultDiv.innerHTML = `<p>Error fetching data. Please try again later.</p>`;
+                    resultDiv.style.display = 'block';
+                });
+        });
+    </script>
+
+</body>
+
+</html>
